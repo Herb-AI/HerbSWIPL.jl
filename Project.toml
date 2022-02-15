@@ -1,0 +1,10 @@
+name = "HerbSWIPL"
+uuid = "c53f3364-2133-4cef-9e56-87e4b0e2511c"
+authors = ["Sebastijan <sebastijan.dumancic@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Debugger = "31a5f54b-26ea-5ae9-a837-f05ce5417438"
+Julog = "5d8bcb5e-2b2c-4a96-a2b1-d40b3d3c344f"
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

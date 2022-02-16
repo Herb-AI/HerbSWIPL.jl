@@ -12,6 +12,8 @@ function to_swipl_ref(c::Const, previous_variables::Dict{Var,Cint}, ref::Cint)
         PL_put_integer(ref, c.name)
     elseif isa(c.name, Float64)
         PL_put_float(ref, c.name)
+    elseif isa(c.name, String)
+        PL_put_string_chars(ref, c.name)
     end
    
 end
@@ -149,6 +151,8 @@ function swipl_to_atom(term::Cint)
     end
 end
 
+swipl_to_string(term::Cint) = Const(PL_get_chars(term))
+
 function swipl_to_var(term::Cint, term_to_var::Dict{Cint,Var})
     if haskey(term_to_var, term)
         term_to_var[term]
@@ -224,6 +228,8 @@ function from_swipl(term::Cint, term_to_var::Dict{Cint,Var})
     if PL_is_atom(term)
         #println("is atom")
         swipl_to_atom(term)
+    elseif PL_is_string(term)
+        swipl_to_string(term)
     elseif PL_is_integer(term)
         #println("is integer")
         swipl_to_int(term)

@@ -207,6 +207,12 @@ function PL_get_atom(term::Cint)
     atm[]
 end
 
+function PL_get_chars(term::Cint)
+    atm = Ref{Cstring}(C_NULL)
+    ccall((:PL_get_chars, SWIPL_LIB), Cint, (Cint, Ref{Cstring}, Cint), term, atm, convert(Cint, 0x00000002))
+    unsafe_string(atm[])
+end
+
 function PL_get_integer(term::Cint)
     atm = Ref{Cint}(0)
     ccall((:PL_get_integer, SWIPL_LIB), Cint, (Cint, Ref{Cint}), term, atm)

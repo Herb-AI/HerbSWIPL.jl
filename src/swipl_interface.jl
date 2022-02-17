@@ -174,7 +174,7 @@ function is_nil(term::Cint)
     PL_term_type(term) == PL_NIL
 end
 
-function swipl_to_list(term::Cint)
+function swipl_to_list_julog(term::Cint)
     head = PL_new_term_ref()
     tail = PL_new_term_ref()
 
@@ -190,6 +190,18 @@ function swipl_to_list(term::Cint)
     end
 
     return Compound(:cons, elems)
+end
+
+function swipl_to_list_julia(term::Cint)
+    elements = Vector{Term}()
+    list = PL_copy_term_ref(term)
+    head = PL_new_term_ref()
+
+    while PL_get_list(list, head, list) > 0
+        push!(elements, from_swipl(head))
+    end
+
+    return elements
 end
 
 function swipl_to_pair(term::Cint)
@@ -211,13 +223,12 @@ function swipl_to_compound(term::Cint, term_to_var::Dict{Cint, Var})
         elem = PL_new_term_ref()
         PL_get_arg(arg_index, term, elem)
         elems[arg_index] = from_swipl(elem, term_to_var)
-        # push!(elems, from_swipl(elem, term_to_var))
     end
 
     Compound(Symbol(functor_name), elems)
 end
 
-function from_swipl(term::Cint, term_to_var::Dict{Cint,Var})
+function from_swipl(term::Cint, term_to_var::Dict{Cint,Var}, list_type::Symbol=:julog)
     #println("from swipl")
     term_type = PL_term_type(term)
     #println("term type: $(term_type)")
@@ -230,7 +241,11 @@ function from_swipl(term::Cint, term_to_var::Dict{Cint,Var})
     elseif PL_is_float(term)
         swipl_to_float(term)
     elseif PL_is_list(term)
-        swipl_to_list(term)
+        if list_type == :julog
+            swipl_to_list_julog(term)
+        else
+            swipl_to_list_julia(term)
+        end
     elseif PL_is_compound(term)
         swipl_to_compound(term, term_to_var)
     elseif PL_is_variable(term)
@@ -241,6 +256,7 @@ function from_swipl(term::Cint, term_to_var::Dict{Cint,Var})
 end
 
 from_swipl(term::Cint) = from_swipl(term, Dict{Cint,Var}())
+from_swipl(term::Cint, list_type::Symbol) = from_swipl(term, Dict{Cint,Var}(), list_type)
 
 
 
@@ -323,6 +339,7 @@ function resolve(prolog::Swipl, query::Compound, clauses::Vector{Clause}; option
         max_solutions = get(options, :max_solutions, -1)::Int64
     end
     keep_kb = get(options, :keep, false)::Bool
+    list_type = get(options, :lists, :julog)::Symbol
 
     _assert_all(prolog, clauses)
 
@@ -342,14 +359,14 @@ function resolve(prolog::Swipl, query::Compound, clauses::Vector{Clause}; option
 
     worked::Bool = r > 0 ? true : false
 
-    all_solutions = Vector{Dict{Var,Term}}( )
+    all_solutions = Vector{Dict{Var,Union{Term,Vector}}}( )
 
     while r == 1 & (max_solutions != 0)
         max_solutions -= 1
 
-        current_solution = Dict{Var,Term}()
+        current_solution = Dict{Var,Union{Term,Vector}}()
         for (var, value) in query_vars
-            current_solution[var] = from_swipl(value, term_to_var_map)
+            current_solution[var] = from_swipl(value, term_to_var_map, list_type)
         end
         #println("pushing $(current_solution) to all_solutions")
         push!(all_solutions, current_solution)

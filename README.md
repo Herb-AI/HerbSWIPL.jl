@@ -80,6 +80,17 @@ julia> sat, subst = resolve(prolog, goals, clauses; mode=:max, max_solution=5);
  You can prevent `resolve` from retracting everything through the `keep` option: `keep=true`.
 
 
+ By default, HerbSWIPL returns lists in the pair format.
+ However, this turns out to be extremely inefficient for long lists.
+ A significantly more efficient alternative is to return answers as Julia Vectors.
+ For this reason, HerbSWIPL allows you to choose the format of the lists through the `lists` option:
+  - `:julia` returns lists as Julia Vector
+  - `:julog` returns lists in the pair format
+  ```
+  sat, res = swipl_resolve(prolog, goal, clauses; lists=:julia)
+  ```
+
+
 # Julia functions as Prolog predicates
 
 HerbSWIPL.jl supports converting Julia functions to Prolog predicates

@@ -170,30 +170,26 @@ function swipl_to_var(term::Cint, term_to_var::Dict{Cint,Var})
     end
 end
 
-
-function to_pair_list(elems::Vector{Term})
-   if length(elems) == 1
-        push!(elems, Compound(:cend, []))
-        Compound(:cons, elems)
-   else
-        args = Vector{Term}(undef, 2)
-        args[1] = elems[begin]
-        args[2] = to_pair_list(elems[2:end])
-        Compound(:cons, args)
-   end
+function is_nil(term::Cint)
+    PL_term_type(term) == PL_NIL
 end
 
 function swipl_to_list(term::Cint)
-    elements = Vector{Term}()
-    list = PL_copy_term_ref(term)
-
     head = PL_new_term_ref()
+    tail = PL_new_term_ref()
 
-    while PL_get_list(list, head, list) > 0
-        push!(elements, from_swipl(head))
+    PL_get_list(term, head, tail)
+
+    elems = Vector{Term}(undef, 2)
+    elems[1] = from_swipl(head)
+
+    if is_nil(tail)
+        elems[2] = Compound(:cend, [])   
+    else
+        elems[2] = from_swipl(tail)
     end
 
-    to_pair_list(elements)
+    return Compound(:cons, elems)
 end
 
 function swipl_to_pair(term::Cint)
@@ -226,24 +222,18 @@ function from_swipl(term::Cint, term_to_var::Dict{Cint,Var})
     term_type = PL_term_type(term)
     #println("term type: $(term_type)")
     if PL_is_atom(term)
-        #println("is atom")
         swipl_to_atom(term)
     elseif PL_is_string(term)
         swipl_to_string(term)
     elseif PL_is_integer(term)
-        #println("is integer")
         swipl_to_int(term)
     elseif PL_is_float(term)
-        #println("is float")
         swipl_to_float(term)
     elseif PL_is_list(term)
-        #println("is list")
         swipl_to_list(term)
     elseif PL_is_compound(term)
-        #println("is compound")
         swipl_to_compound(term, term_to_var)
     elseif PL_is_variable(term)
-        #println("is variable")
         swipl_to_var(term, term_to_var)
     else
         error("unknown term type $(PL_term_type(term))")

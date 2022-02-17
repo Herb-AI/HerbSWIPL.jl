@@ -189,8 +189,8 @@ function swipl_to_list(term::Cint)
 
     head = PL_new_term_ref()
 
-    while PL_get_list(list, head, list)
-        push!(from_swipl(head), elements)
+    while PL_get_list(list, head, list) > 0
+        push!(elements, from_swipl(head))
     end
 
     to_pair_list(elements)

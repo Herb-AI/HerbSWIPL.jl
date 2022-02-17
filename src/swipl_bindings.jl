@@ -261,6 +261,9 @@ function PL_get_arg(index::Csize_t, term::Cint, term_result::Cint)
 end
 
 
+function PL_get_list(list::Cint, head::Cint, tail::Cint)
+    ccall((:PL_get_list, SWIPL_LIB), Cint, (Cint, Cint, Cint), list, head, tail)
+end
 
 
 
